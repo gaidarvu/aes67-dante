@@ -1,0 +1,18 @@
+#!/bin/bash
+
+SERVICE_NAME="aes67-daemon.service"
+
+check_service_status() {
+    systemctl is-active --quiet "$SERVICE_NAME"
+}
+
+while ! check_service_status; do
+    sleep 2
+done
+echo "$SERVICE_NAME is active"
+
+systemctl stop $SERVICE_NAME
+echo "$SERVICE_NAME was stopped"
+sleep 5
+systemctl start $SERVICE_NAME
+echo "$SERVICE_NAME was started"

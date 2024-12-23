@@ -1,0 +1,105 @@
+- name: Install Dante
+  become: true
+  hosts: tap
+  gather_facts: true
+  handlers:
+  - name: Restart aes67-daemon service
+    systemd:
+      name: aes67-daemon
+      state: restarted
+      enabled: true
+  - name: Restart sysstart_aes67 service
+    systemd:
+      name: sysstart_aes67
+      state: restarted
+      enabled: true
+  - name: Apply Netplan configuration
+    command: netplan apply
+  - name: Reboot host - wait 180 sec
+    reboot:
+      reboot_timeout: 180
+
+  tasks:
+
+    - name: Get network settings
+      set_fact:
+        dante_ip: "{{ octet_1 }}.{{ octet_2 }}.\
+                   {{ ansible_default_ipv4.address.split('.')[2] }}.\
+                   {{ ansible_default_ipv4.address.split('.')[3] }}"
+        vlan30_ip: "{{ ansible_default_ipv4.address.split('.')[0] }}.\
+                 30.{{ ansible_default_ipv4.address.split('.')[2] }}.\
+                    {{ ansible_default_ipv4.address.split('.')[3] }}"
+
+    - name: Display collect data
+      debug:
+        msg: >
+          Original IP: {{ ansible_default_ipv4.address }},
+          Mac address: {{ ansible_default_ipv4.macaddress }},
+          DANTE IP: {{ dante_ip }},
+          IP for VLAN30: {{ vlan30_ip }},
+          Interface name: {{ ansible_default_ipv4.interface }},
+          Gateway: {{ ansible_default_ipv4.gateway }}
+
+    - name: Install aes-daemon
+      apt:
+        update_cache: true
+        name:
+          - aes67-daemon={{ aes_version }}
+
+    - name: Copy netplan config
+      template:
+        src: ./template/00-installer-config.yaml.j2
+        dest: /etc/netplan/00-installer-config.yaml
+        mode: '0644'
+      notify: Apply Netplan configuration
+    - name: Flush handlers
+      meta: flush_handlers
+
+    - name: Copy aes config
+      template:
+        src: ./template/daemon.conf.j2
+        dest: /etc/aes67-daemon/daemon.conf
+        mode: '0755'
+      notify: Restart aes67-daemon service
+
+    - name: Copy aes sound source
+      template:
+        src: ./template/status.json.j2
+        dest: /var/lib/aes67-daemon/status.json
+        mode: '0755'
+      notify: Restart aes67-daemon service    
+
+    - name: Copy aes-restart service
+      template:
+        src: ./template/sysstart_aes67.service.j2
+        dest: /etc/systemd/system/sysstart_aes67.service
+        mode: '0644'
+      notify: Restart sysstart_aes67 service
+    - name: Flush handlers
+      meta: flush_handlers
+
+    - name: Copy aes-restart script
+      template:
+        src: ./template/run_aes67.sh.j2
+        dest: /usr/local/run_aes67.sh
+        mode: '0755'
+
+    - name: Configure pulse
+      replace:
+        path: /etc/pulse/daemon.conf
+        regexp: '{{ item.old }}'
+        replace: '{{ item.new }}'
+      with_items:
+        - {old: '; default-sample-rate = 44100', new: 'default-sample-rate = 48000'}
+        #- {old: '; alternate-sample-rate = 48000', new: 'alternate-sample-rate = 44100'}
+      notify: Reboot host - wait 180 sec
+
+    - name: Set sysctl parameters
+      sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        reload: true
+      with_items:
+        - {name: 'kernel.sched_rt_runtime_us', value: '1000000'}
+        - {name: 'kernel.perf_cpu_time_max_percent', value: '0'}
+      notify: Restart aes67-daemon service

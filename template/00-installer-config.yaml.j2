@@ -1,0 +1,21 @@
+network:
+  ethernets:
+    {{ ansible_default_ipv4.interface }}:
+      optional: true
+      addresses:
+      - {{ ansible_default_ipv4.address }}/16
+      gateway4: {{ ansible_default_ipv4.gateway }}
+      nameservers:
+        addresses:
+        - 10.3.0.250
+        search: []
+  version: 2
+  vlans:
+    {{ interface }}:
+      addresses:
+      - {{ vlan30_ip }}/24
+      id: 30
+      link: {{ ansible_default_ipv4.interface }}
+      nameservers:
+        addresses: []
+        search: []

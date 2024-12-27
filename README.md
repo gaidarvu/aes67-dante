@@ -1,5 +1,7 @@
 # Установка aes67-daemon
 
+Установка aes67-daemon производится из репозитория common-deb
+
 ## Создание VLAN
 
 Необходимо на коммутаторе создать отдельный VLAN "AUDIO" для multicast траффика звуковых источников, а так же настроить qos на портах входящих в вышеуказанный VLAN.
@@ -10,9 +12,9 @@
 
 ## Что делает роль:
 
-- Опрашивает  ansible_facts и заполняет теплейт [text](template/00-installer-config.yaml.j2) для netplan. По факту в netplan только добавляется vlan "AUDIO".
+- Опрашивает  ansible_facts и заполняет [темплейт](template/00-installer-config.yaml.j2) для netplan. По факту в netplan только добавляется vlan "AUDIO".
 
-Для герсов темплейт немного другой [text](template/00-installer-config.yaml.gers.j2)
+Для герсов [темплейт](template/00-installer-config.yaml.gers.j2) немного другой
 
 - Удаляет пакеты pulseaudio с зависимостями и путями из папки home
 

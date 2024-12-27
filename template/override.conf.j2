@@ -1,0 +1,11 @@
+[Service]
+RestartSec=10s
+ExecStartPre=/bin/sleep 20
+
+[Unit]
+Wants=aes67-daemon.service
+After=aes67-daemon.service
+#Requires=aes67-daemon.service
+
+[Install]
+WantedBy=aes67-daemon.service

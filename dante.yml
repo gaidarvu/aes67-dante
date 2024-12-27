@@ -1,26 +1,22 @@
 - name: Install Dante
   become: true
-  hosts: tap
+  hosts: all
   gather_facts: true
   handlers:
   - name: Restart aes67-daemon service
     systemd:
       name: aes67-daemon
       state: restarted
-      enabled: true
-  - name: Restart sysstart_aes67 service
+  - name: Restart Lyra service
     systemd:
-      name: sysstart_aes67
+      daemon_reload: true
+      name: '{{ service_name }}.service'
       state: restarted
-      enabled: true
-  - name: Apply Netplan configuration
-    command: netplan apply
-  - name: Reboot host - wait 180 sec
+  - name: Reboot host
     reboot:
       reboot_timeout: 180
 
   tasks:
-
     - name: Get network settings
       set_fact:
         dante_ip: "{{ octet_1 }}.{{ octet_2 }}.\
@@ -29,31 +25,53 @@
         vlan30_ip: "{{ ansible_default_ipv4.address.split('.')[0] }}.\
                  30.{{ ansible_default_ipv4.address.split('.')[2] }}.\
                     {{ ansible_default_ipv4.address.split('.')[3] }}"
+        vlan2_ip: "{{ ansible_default_ipv4.address.split('.')[0] }}.\
+                 2.{{ ansible_default_ipv4.address.split('.')[2] }}.\
+                    {{ ansible_default_ipv4.address.split('.')[3] }}"
 
-    - name: Display collect data
-      debug:
-        msg: >
-          Original IP: {{ ansible_default_ipv4.address }},
-          Mac address: {{ ansible_default_ipv4.macaddress }},
-          DANTE IP: {{ dante_ip }},
-          IP for VLAN30: {{ vlan30_ip }},
-          Interface name: {{ ansible_default_ipv4.interface }},
-          Gateway: {{ ansible_default_ipv4.gateway }}
+    # - name: Display collect data
+    #   debug:
+    #     msg: >
+    #       Original IP: {{ ansible_default_ipv4.address }},
+    #       Mac address: {{ ansible_default_ipv4.macaddress }},
+    #       DANTE IP: {{ dante_ip }},
+    #       IP for VLAN30: {{ vlan30_ip }},
+    #       Interface name: {{ ansible_default_ipv4.interface }},
+    #       Gateway: {{ ansible_default_ipv4.gateway }}
+
+    - name: Purge PulseAudio
+      apt:
+        name: pulseaudio
+        state: absent
+        purge: true
+        autoremove: true
+
+    - name: Remove PulseAudio trash
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /etc/pulse/
+        - /home/mvs/.config/pulse/
 
     - name: Install aes-daemon
       apt:
         update_cache: true
         name:
           - aes67-daemon={{ aes_version }}
+      notify: Reboot host
 
     - name: Copy netplan config
       template:
-        src: ./template/00-installer-config.yaml.j2
+        src: "{{ item.src }}"
         dest: /etc/netplan/00-installer-config.yaml
         mode: '0644'
       notify: Apply Netplan configuration
-    - name: Flush handlers
-      meta: flush_handlers
+      when: inventory_hostname in groups[item.group]
+      with_items:
+        - {src: './template/00-installer-config.yaml.j2', group: 'tap'}
+        - {src: './template/00-installer-config.yaml.gers.j2', group: 'gers'}
+      notify: Reboot host
 
     - name: Copy aes config
       template:
@@ -61,45 +79,71 @@
         dest: /etc/aes67-daemon/daemon.conf
         mode: '0755'
       notify: Restart aes67-daemon service
+      notify: Reboot host
 
     - name: Copy aes sound source
       template:
         src: ./template/status.json.j2
         dest: /var/lib/aes67-daemon/status.json
         mode: '0755'
-      notify: Restart aes67-daemon service    
+        owner: aes67-daemon
+        group: aes67-daemon
+      when: inventory_hostname in groups['tap']
 
-    - name: Copy aes-restart service
-      template:
-        src: ./template/sysstart_aes67.service.j2
-        dest: /etc/systemd/system/sysstart_aes67.service
-        mode: '0644'
-      notify: Restart sysstart_aes67 service
-    - name: Flush handlers
-      meta: flush_handlers
+    # - name: Copy aes-restart service
+    #   template:
+    #     src: ./template/sysstart_aes67.service.j2
+    #     dest: /etc/systemd/system/sysstart_aes67.service
+    #     mode: '0644'
+    #   notify: Restart sysstart_aes67 service
+    # - name: Flush handlers
+    #   meta: flush_handlers
 
-    - name: Copy aes-restart script
-      template:
-        src: ./template/run_aes67.sh.j2
-        dest: /usr/local/run_aes67.sh
+    # - name: Copy aes-restart script
+    #   template:
+    #     src: ./template/run_aes67.sh.j2
+    #     dest: /usr/local/run_aes67.sh
+    #     mode: '0755'
+
+    # - name: Configure pulse
+    #   replace:
+    #     path: /etc/pulse/daemon.conf
+    #     regexp: '{{ item.old }}'
+    #     replace: '{{ item.new }}'
+    #   with_items:
+    #     - {old: '; default-sample-rate = 44100', new: 'default-sample-rate = 48000'}
+    #     #- {old: '; alternate-sample-rate = 48000', new: 'alternate-sample-rate = 44100'}
+    #   notify: Reboot host - wait 180 sec
+
+    - name: Make overrigde directory
+      file:
+        path: /etc/systemd/system/{{ service_name }}.service.d
+        state: directory
         mode: '0755'
 
-    - name: Configure pulse
-      replace:
-        path: /etc/pulse/daemon.conf
-        regexp: '{{ item.old }}'
-        replace: '{{ item.new }}'
-      with_items:
-        - {old: '; default-sample-rate = 44100', new: 'default-sample-rate = 48000'}
-        #- {old: '; alternate-sample-rate = 48000', new: 'alternate-sample-rate = 44100'}
-      notify: Reboot host - wait 180 sec
+    - name: Create the override configuration
+      template:
+        src: ./template/override.conf.j2
+        dest: /etc/systemd/system/{{ service_name }}.service.d/override.conf
+        mode: '0755'
+      notify: Restart Lyra service
+      tags:
+        - override
 
     - name: Set sysctl parameters
       sysctl:
         name: "{{ item.name }}"
         value: "{{ item.value }}"
         reload: true
+      when: inventory_hostname in groups[item.group]
       with_items:
-        - {name: 'kernel.sched_rt_runtime_us', value: '1000000'}
-        - {name: 'kernel.perf_cpu_time_max_percent', value: '0'}
-      notify: Restart aes67-daemon service
+        - {name: 'kernel.sched_rt_runtime_us', value: '1000000', group: 'tap'}
+        - {name: 'kernel.perf_cpu_time_max_percent', value: '0', group: 'tap'}
+        - {name: 'net.core.wmem_max', value: '12582912', group: 'gers'}
+        - {name: 'net.core.rmem_max', value: '12582912', group: 'gers'}
+        - {name: 'net.ipv4.tcp_rmem', value: '10240 87380 12582912', group: 'gers'}
+        - {name: 'net.ipv4.tcp_wmem', value: '10240 87380 12582912', group: 'gers'}
+        - {name: 'net.ipv4.tcp_window_scaling', value: '1', group: 'gers'}
+        - {name: 'net.ipv4.tcp_timestamps', value: '1', group: 'gers'}
+        - {name: 'net.core.netdev_max_backlog', value: '5000', group: 'gers'}
+      notify: Reboot host

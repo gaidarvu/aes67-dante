@@ -78,7 +78,6 @@
         src: ./template/daemon.conf.j2
         dest: /etc/aes67-daemon/daemon.conf
         mode: '0755'
-      notify: Restart aes67-daemon service
       notify: Reboot host
 
     - name: Copy aes sound source
@@ -127,8 +126,6 @@
         dest: /etc/systemd/system/{{ service_name }}.service.d/override.conf
         mode: '0755'
       notify: Restart Lyra service
-      tags:
-        - override
 
     - name: Set sysctl parameters
       sysctl:

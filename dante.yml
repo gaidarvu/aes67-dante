@@ -45,6 +45,7 @@
         state: absent
         purge: true
         autoremove: true
+      when: inventory_hostname not in groups['conference']
 
     - name: Remove PulseAudio trash
       file:
@@ -53,6 +54,7 @@
       with_items:
         - /etc/pulse/
         - /home/mvs/.config/pulse/
+      when: inventory_hostname not in groups['conference']
 
     - name: Install aes-daemon
       apt:
@@ -89,30 +91,15 @@
         group: aes67-daemon
       when: inventory_hostname in groups['tap']
 
-    # - name: Copy aes-restart service
-    #   template:
-    #     src: ./template/sysstart_aes67.service.j2
-    #     dest: /etc/systemd/system/sysstart_aes67.service
-    #     mode: '0644'
-    #   notify: Restart sysstart_aes67 service
-    # - name: Flush handlers
-    #   meta: flush_handlers
-
-    # - name: Copy aes-restart script
-    #   template:
-    #     src: ./template/run_aes67.sh.j2
-    #     dest: /usr/local/run_aes67.sh
-    #     mode: '0755'
-
-    # - name: Configure pulse
-    #   replace:
-    #     path: /etc/pulse/daemon.conf
-    #     regexp: '{{ item.old }}'
-    #     replace: '{{ item.new }}'
-    #   with_items:
-    #     - {old: '; default-sample-rate = 44100', new: 'default-sample-rate = 48000'}
-    #     #- {old: '; alternate-sample-rate = 48000', new: 'alternate-sample-rate = 44100'}
-    #   notify: Reboot host - wait 180 sec
+    - name: Configure pulse
+      replace:
+        path: /etc/pulse/daemon.conf
+        regexp: '{{ item.old }}'
+        replace: '{{ item.new }}'
+      with_items:
+        - {old: '; default-sample-rate = 44100', new: 'default-sample-rate = 48000'}
+      notify: Reboot host
+      when: inventory_hostname in groups['conference']
 
     - name: Make overrigde directory
       file:

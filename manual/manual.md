@@ -103,15 +103,15 @@ Dante-устройства получают адресацию по DHCP. Важ
 ## Поиск и настройка устройств в Dante Controller
 1. Открываем интерфейс Dante Controller, нажимаем **Ctrl+D** и получаем список найденых устройств в выпадающем окне.
 
-![pic](<device list.png>)
+![pic](<pics/device list.png>)
 
 2. В появившемся списке даем устройствам удобные имена.
 
-![pic](<rename dev.png>)
+![pic](<pics/rename dev.png>)
 
 3. Назначаем статические IP-адреса.
 
-![pic](netconfig.png)
+![pic](pics/netconfig.png)
 
 4. Если появляются проблемы с отображением устройств, перезапускаем Dante Controller.
 
@@ -135,7 +135,7 @@ Dante-устройства получают адресацию по DHCP. Важ
 1. Открываем интерфейс Dante Controller, нажимаем **Ctrl+D**
 2. Выбираем нашу аудиоматрицу и на вкладке Transmit создаем новый мультикаст.
 
-![pic](<create multicast.png>)
+![pic](<pics/create multicast.png>)
 
 3. Получаем:
    - **IP-адрес** (генерируется автоматически или настраивается вручную, порт `5004`)
@@ -144,9 +144,9 @@ Dante-устройства получают адресацию по DHCP. Важ
 4. Подтверждаем изменения.
 5. Мы создали мультикаст для одного устройства. Надо повторить для остальных.
 
-![pic](<create multicast 2.png>)
+![pic](<pics/create multicast 2.png>)
 
-![pic](<create multicast 3.png>)
+![pic](<pics/create multicast 3.png>)
 
 ## Настройка Sink на устройствах с поддержкой AES67
 
@@ -165,12 +165,12 @@ Dante-устройства получают адресацию по DHCP. Важ
 1. Заходим в веб-интерфейс конференции `http://10.30.1.35:8080`.
 2. Добавляем **Sink**.
 
-![pic](<create sink.png>)
+![pic](<pics/create sink.png>)
 
 3. В **Remote Source SDP** выбираем аудиокоммутатор с нужным мультикаст-номером.
 4. Проверяем TX-каналы и IP-адрес в окне SDP.
 
-![pic](<create sink 2.png>)
+![pic](<pics/create sink 2.png>)
 
 5. Сохраняем изменения.
 

@@ -35,12 +35,9 @@ vlan 30
 mac access-list extended 1030
   permit any any vlan 30
 !
-class-map 30 
+class-map 1030
   match access-group mac-access-list 1030
-  set class 30
-!
-policy-map 30
-  set policy class 30 default-priority-type ipDscp 46
+  set class 1030 regen-priority 6 group-name dante
 !
 interface gigabitethernet 0/i
   switchport mode general
@@ -48,20 +45,20 @@ interface gigabitethernet 0/i
   switchport general allowed vlan add 3 untagged
   switchport forbidden default-vlan
   switchport general pvid 3
-  qos trust cos-dscp
+  mac access-group 1030 in
   flowcontrol on
 !
 interface gigabitethernet 0/j
   switchport mode access
   switchport forbidden default-vlan
   switchport access vlan 30
-  qos trust cos-dscp
+  mac access-group 1030 in
   flowcontrol on
 !
 interface gigabitethernet 0/trunk
   switchport general allowed vlan add 3-4,30
   switchport forbidden default-vlan
-  qos trust cos-dscp
+  mac access-group 1030 in
 !
 ```
 

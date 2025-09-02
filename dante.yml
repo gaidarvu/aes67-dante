@@ -45,7 +45,7 @@
         state: absent
         purge: true
         autoremove: true
-      when: inventory_hostname not in groups['conference']
+      # when: inventory_hostname not in groups['conference']
 
     - name: Remove PulseAudio trash
       file:
@@ -54,7 +54,7 @@
       with_items:
         - /etc/pulse/
         - /home/mvs/.config/pulse/
-      when: inventory_hostname not in groups['conference']
+      # when: inventory_hostname not in groups['conference']
 
     - name: Install aes-daemon
       apt:
@@ -91,15 +91,15 @@
         group: aes67-daemon
       when: inventory_hostname in groups['tap']
 
-    - name: Configure pulse
-      replace:
-        path: /etc/pulse/daemon.conf
-        regexp: '{{ item.old }}'
-        replace: '{{ item.new }}'
-      with_items:
-        - {old: '; default-sample-rate = 44100', new: 'default-sample-rate = 48000'}
-      notify: Reboot host
-      when: inventory_hostname in groups['conference']
+    # - name: Configure pulse
+    #   replace:
+    #     path: /etc/pulse/daemon.conf
+    #     regexp: '{{ item.old }}'
+    #     replace: '{{ item.new }}'
+    #   with_items:
+    #     - {old: '; default-sample-rate = 44100', new: 'default-sample-rate = 48000'}
+    #   notify: Reboot host
+      # when: inventory_hostname in groups['conference']
 
     - name: Make overrigde directory
       file:

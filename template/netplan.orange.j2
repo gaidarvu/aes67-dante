@@ -1,0 +1,32 @@
+network:
+  ethernets:
+    {{ ansible_default_ipv4.interface }}:
+      dhcp4: false
+      dhcp6: false
+      addresses:
+        - {{ ansible_default_ipv4.address }}/16
+      routes:
+        - to: 0.0.0.0/0
+          via: {{ ansible_default_ipv4.gateway }}
+      nameservers:
+        addresses:
+         - 10.3.0.250
+  version: 2
+  renderer: NetworkManager
+  vlans:
+    VIDEO:
+      addresses:
+      - {{ vlan2_ip }}/16
+      id: 2
+      link: {{ ansible_default_ipv4.interface }}
+      nameservers:
+        addresses: []
+        search: []
+    {{ interface }}:
+      addresses:
+      - {{ vlan30_ip }}/24
+      id: 30
+      link: {{ ansible_default_ipv4.interface }}
+      nameservers:
+        addresses: []
+        search: []

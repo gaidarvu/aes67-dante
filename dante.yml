@@ -60,20 +60,35 @@
       apt:
         update_cache: true
         name:
+          - aes67-webui=1.6.5-0
           - aes67-daemon={{ aes_version }}
+          # - aes67-daemon
       notify: Reboot host
 
     - name: Copy netplan config
       template:
         src: "{{ item.src }}"
-        dest: /etc/netplan/00-installer-config.yaml
+        dest: /etc/netplan/{{ item.dest }}
         mode: '0644'
       notify: Apply Netplan configuration
       when: inventory_hostname in groups[item.group]
       with_items:
-        - {src: './template/00-installer-config.yaml.j2', group: 'tap'}
-        - {src: './template/00-installer-config.yaml.gers.j2', group: 'gers'}
+        - {src: './template/netplan.tap.j2', group: 'tap', dest: '00-installer-config.yaml'}
+        - {src: './template/netplan.gers.j2', group: 'gers', dest: '00-installer-config.yaml'}
+        - {src: './template/netplan.orange.j2', group: 'orange', dest: 'orangepi-default.yaml'}
       notify: Reboot host
+
+    # - name: Copy netplan config
+    #   template:
+    #     src: "{{ item.src }}"
+    #     dest: /etc/netplan/00-installer-config.yaml
+    #     mode: '0644'
+    #   notify: Apply Netplan configuration
+    #   when: inventory_hostname in groups[item.group]
+    #   with_items:
+    #     - {src: './template/00-installer-config.yaml.j2', group: 'tap'}
+    #     - {src: './template/00-installer-config.yaml.gers.j2', group: 'gers'}
+    #   notify: Reboot host
 
     - name: Copy aes config
       template:
@@ -130,4 +145,11 @@
         - {name: 'net.ipv4.tcp_window_scaling', value: '1', group: 'gers'}
         - {name: 'net.ipv4.tcp_timestamps', value: '1', group: 'gers'}
         - {name: 'net.core.netdev_max_backlog', value: '5000', group: 'gers'}
+        - {name: 'net.core.wmem_max', value: '12582912', group: 'orange'}
+        - {name: 'net.core.rmem_max', value: '12582912', group: 'orange'}
+        - {name: 'net.ipv4.tcp_rmem', value: '10240 87380 12582912', group: 'orange'}
+        - {name: 'net.ipv4.tcp_wmem', value: '10240 87380 12582912', group: 'orange'}
+        - {name: 'net.ipv4.tcp_window_scaling', value: '1', group: 'orange'}
+        - {name: 'net.ipv4.tcp_timestamps', value: '1', group: 'orange'}
+        - {name: 'net.core.netdev_max_backlog', value: '5000', group: 'orange'}
       notify: Reboot host

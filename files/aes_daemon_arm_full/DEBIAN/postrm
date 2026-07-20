@@ -1,0 +1,36 @@
+#!/bin/sh -e
+
+
+
+error()
+{
+    RET=$?
+    MSG=$1
+    echo "E: $MSG";
+    exit $RET
+}
+
+case "$1" in
+    remove)
+        /sbin/depmod -a
+        /sbin/ldconfig
+	/usr/bin/getent passwd aes67-daemon > /dev/null || { /usr/sbin/userdel aes67-daemon; /usr/bin/groupdel aes67-daemon; }
+	/bin/systemctl daemon-reload
+        ;;
+
+    purge)
+        ;;
+
+    upgrade|failed-upgrade|disappear)
+        ;;
+
+    abort-install|abort-upgrade)
+        ;;
+
+    *)
+        echo "$0 called with unknown argument \`$1'" 1>&2
+        exit 1
+        ;;
+esac
+
+exit 0

@@ -1,0 +1,25 @@
+#!/bin/bash                                    
+                                               
+SUCCESS=0                                      
+ERROR=1                                        
+                                               
+case "$1" in                                                                                   
+    upgrade )                                                                                  
+            ;;                                                                                 
+    remove ) 
+	/bin/systemctl stop aes67-daemon
+	/bin/systemctl disable aes67-daemon                                                                                 
+        ;;                                                                                     
+    purge )                                                                                    
+        ;;                                                                                     
+                                                                                               
+    failed-upgrade|disappear|abort-upgrade|upgrade)                                            
+        ;;                                                                                     
+    abort-install )                                                                            
+        ;;                                                                                     
+    *)                                                                                         
+        echo "$0 called with unknown argument \`$1'" 1>&2
+        exit $ERROR                            
+        ;;                                     
+esac    
+

@@ -1,0 +1,8 @@
+Package: aes67-full
+Version: 2.2.0
+Architecture: amd64
+Maintainer: Gaidar V.U. <gaidar.vu@gmail.com>
+Installed-Size: 13948
+Depends: libboost-filesystem-dev, libboost-system-dev, libboost-thread-dev, libboost-log-dev, libboost-program-options-dev, libsystemd-dev, libfaac0
+Priority: optional
+Description: AES67 master (for Ubuntu 18)

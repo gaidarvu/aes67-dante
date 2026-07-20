@@ -1,0 +1,8 @@
+Package: aes67-full
+Version: 1.0.0-1
+Architecture: arm64
+Maintainer: Gaidar V.U. <gaidar.vu@gmail.com>
+Installed-Size: 8615
+Depends: libsystemd-dev, libboost-thread-dev, libboost-log-dev, libboost-program-options-dev, libavahi-common3, libavahi-client3, libfaac0
+Priority: optional
+Description: AES67 master

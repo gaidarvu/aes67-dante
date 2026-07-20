@@ -1,0 +1,33 @@
+#!/bin/sh -e
+
+error()
+{
+    RET=$?
+    MSG=$1
+    echo "E: $MSG";
+    exit $RET
+}
+
+case "$1" in
+    configure)
+        /usr/bin/getent passwd aes67-daemon > /dev/null || /usr/sbin/useradd -s /sbin/nologin --system -U aes67-daemon
+        ln -sf /etc/aes67-daemon/daemon.conf /etc/daemon.conf
+        /bin/chown aes67-daemon:aes67-daemon /etc/aes67-daemon/daemon.conf
+        /bin/chown aes67-daemon:aes67-daemon /var/lib/aes67-daemon/status.json
+        /sbin/ldconfig
+	    /bin/systemctl daemon-reload
+        /bin/systemctl enable aes67-daemon.service
+        /sbin/depmod -a
+	    /sbin/modprobe MergingRavennaALSA
+        ;;
+
+    abort-upgrade|abort-deconfigure|abort-remove)
+        ;;
+
+    *)
+        echo "$0 called with unknown argument \`$1'" 1>&2
+        exit 1
+        ;;
+esac
+
+exit 0

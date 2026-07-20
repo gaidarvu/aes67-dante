@@ -29,23 +29,12 @@
                  2.{{ ansible_default_ipv4.address.split('.')[2] }}.\
                     {{ ansible_default_ipv4.address.split('.')[3] }}"
 
-    # - name: Display collect data
-    #   debug:
-    #     msg: >
-    #       Original IP: {{ ansible_default_ipv4.address }},
-    #       Mac address: {{ ansible_default_ipv4.macaddress }},
-    #       DANTE IP: {{ dante_ip }},
-    #       IP for VLAN30: {{ vlan30_ip }},
-    #       Interface name: {{ ansible_default_ipv4.interface }},
-    #       Gateway: {{ ansible_default_ipv4.gateway }}
-
     - name: Purge PulseAudio
       apt:
         name: pulseaudio
         state: absent
         purge: true
         autoremove: true
-      # when: inventory_hostname not in groups['conference']
 
     - name: Remove PulseAudio trash
       file:
@@ -54,15 +43,21 @@
       with_items:
         - /etc/pulse/
         - /home/mvs/.config/pulse/
-      # when: inventory_hostname not in groups['conference']
 
-    - name: Install aes-daemon
+    - name: Copy aes67-full
+      copy:
+        src: "{{ item.pkg }}"
+        dest: /tmp/aes67-full.deb
+        mode: '0644'
+      loop:
+        - {pkg: "aes67_full_v2.2.0_amd64.deb", arch: 'x86_64'}
+        - {pkg: "aes67_full_arm64.deb", arch: 'aarch64'}
+      when: ansible_architecture == item.arch
+
+    - name: Install aes67-full
       apt:
+        deb: /tmp/aes67-full.deb
         update_cache: true
-        name:
-          - aes67-webui=1.6.5-0
-          - aes67-daemon={{ aes_version }}
-          # - aes67-daemon
       notify: Reboot host
 
     - name: Copy netplan config
@@ -77,18 +72,6 @@
         - {src: './template/netplan.gers.j2', group: 'gers', dest: '00-installer-config.yaml'}
         - {src: './template/netplan.orange.j2', group: 'orange', dest: 'orangepi-default.yaml'}
       notify: Reboot host
-
-    # - name: Copy netplan config
-    #   template:
-    #     src: "{{ item.src }}"
-    #     dest: /etc/netplan/00-installer-config.yaml
-    #     mode: '0644'
-    #   notify: Apply Netplan configuration
-    #   when: inventory_hostname in groups[item.group]
-    #   with_items:
-    #     - {src: './template/00-installer-config.yaml.j2', group: 'tap'}
-    #     - {src: './template/00-installer-config.yaml.gers.j2', group: 'gers'}
-    #   notify: Reboot host
 
     - name: Copy aes config
       template:
@@ -105,16 +88,6 @@
         owner: aes67-daemon
         group: aes67-daemon
       when: inventory_hostname in groups['tap']
-
-    # - name: Configure pulse
-    #   replace:
-    #     path: /etc/pulse/daemon.conf
-    #     regexp: '{{ item.old }}'
-    #     replace: '{{ item.new }}'
-    #   with_items:
-    #     - {old: '; default-sample-rate = 44100', new: 'default-sample-rate = 48000'}
-    #   notify: Reboot host
-      # when: inventory_hostname in groups['conference']
 
     - name: Make overrigde directory
       file:

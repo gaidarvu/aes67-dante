@@ -5,12 +5,11 @@ After=network.target
 
 [Service]
 Type=notify
-WatchdogSec=10
 User=aes67-daemon
 Group=aes67-daemon
 ExecStartPre=/bin/sleep 10
 ExecStart=/usr/bin/aes67-daemon
-CapabilityBoundingSet=
+CapabilityBoundingSet=CAP_SYS_NICE CAP_IPC_LOCK CAP_NET_BIND_SERVICE
 DevicePolicy=closed
 DeviceAllow=char-alsa
 DeviceAllow=/dev/snd/*
@@ -34,7 +33,6 @@ ProtectSystem=strict
 RemoveIPC=yes
 RestrictAddressFamilies=AF_INET AF_NETLINK AF_UNIX
 RestrictNamespaces=yes
-RestrictRealtime=yes
 RestrictSUIDSGID=yes
 SystemCallArchitectures=native
 SystemCallFilter=~@clock
@@ -51,6 +49,8 @@ SystemCallFilter=~@swap
 UMask=077
 ReadWritePaths=/etc/aes67-daemon/daemon.conf
 ReadWritePaths=/var/lib/aes67-daemon -c /etc/aes67-daemon/daemon.conf
+Restart=always
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
